@@ -1,0 +1,1642 @@
+/* =========================================================
+   SIH26002 — FLEET MONITOR 11C
+   ADVANCED COMMAND CENTRE STYLING
+========================================================= */
+
+
+/* =========================================================
+   FLEET HEADER
+========================================================= */
+
+.fleet-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+
+.fleet-live-pill {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 10px 16px;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  color: #8fffc1;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+
+  backdrop-filter: blur(12px);
+}
+
+
+.live-pulse {
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: #4cff9a;
+
+  box-shadow:
+    0 0 0 0 rgba(76, 255, 154, 0.7);
+
+  animation: fleetPulse 1.8s infinite;
+}
+
+
+@keyframes fleetPulse {
+
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(76, 255, 154, 0.7);
+  }
+
+  70% {
+    box-shadow:
+      0 0 0 8px rgba(76, 255, 154, 0);
+  }
+
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(76, 255, 154, 0);
+  }
+
+}
+
+
+/* =========================================================
+   NETWORK STRIP
+========================================================= */
+
+.fleet-network-strip {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(5, minmax(0, 1fr));
+
+  gap: 12px;
+
+  margin-bottom: 20px;
+
+}
+
+
+.network-stat {
+
+  min-height: 76px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 14px 16px;
+
+  border:
+
+    1px solid
+    rgba(255, 255, 255, 0.08);
+
+  border-radius: 14px;
+
+  background:
+
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.06),
+      rgba(255, 255, 255, 0.025)
+    );
+
+  backdrop-filter: blur(14px);
+
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease;
+
+}
+
+
+.network-stat:hover {
+
+  transform:
+    translateY(-3px);
+
+  border-color:
+    rgba(255, 255, 255, 0.18);
+
+  background:
+    rgba(255, 255, 255, 0.075);
+
+}
+
+
+.network-stat small {
+
+  display: block;
+
+  font-size: 9px;
+
+  letter-spacing: 1.5px;
+
+  opacity: 0.55;
+
+}
+
+
+.network-stat strong {
+
+  display: block;
+
+  margin-top: 3px;
+
+  font-size: 20px;
+
+  letter-spacing: 0.5px;
+
+}
+
+
+.network-dot {
+
+  width: 10px;
+
+  height: 10px;
+
+  border-radius: 50%;
+
+  flex-shrink: 0;
+
+}
+
+
+.network-dot.green {
+
+  background: #4cff9a;
+
+  box-shadow:
+    0 0 12px
+    rgba(76, 255, 154, 0.65);
+
+}
+
+
+.network-dot.yellow {
+
+  background: #ffd166;
+
+  box-shadow:
+    0 0 12px
+    rgba(255, 209, 102, 0.55);
+
+}
+
+
+.network-dot.red {
+
+  background: #ff5c70;
+
+  box-shadow:
+    0 0 12px
+    rgba(255, 92, 112, 0.65);
+
+}
+
+
+.network-icon {
+
+  width: 28px;
+
+  height: 28px;
+
+  display: grid;
+
+  place-items: center;
+
+  border-radius: 8px;
+
+  background:
+    rgba(255, 255, 255, 0.06);
+
+  font-size: 14px;
+
+}
+
+
+/* =========================================================
+   FLEET WORKSPACE
+========================================================= */
+
+.fleet-workspace {
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(270px, 0.75fr)
+    minmax(480px, 1.7fr);
+
+  gap: 18px;
+
+  align-items: start;
+
+}
+
+
+/* =========================================================
+   PANELS
+========================================================= */
+
+.fleet-list-panel,
+.fleet-detail-panel {
+
+  border:
+
+    1px solid
+    rgba(255, 255, 255, 0.09);
+
+  border-radius: 18px;
+
+  background:
+
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.065),
+      rgba(255, 255, 255, 0.025)
+    );
+
+  box-shadow:
+    0 20px 60px
+    rgba(0, 0, 0, 0.2);
+
+  backdrop-filter:
+    blur(18px);
+
+}
+
+
+.fleet-list-panel {
+
+  overflow: hidden;
+
+}
+
+
+.fleet-detail-panel {
+
+  padding: 22px;
+
+}
+
+
+/* =========================================================
+   PANEL HEADING
+========================================================= */
+
+.panel-heading {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  padding: 20px 20px 15px;
+
+}
+
+
+.panel-heading > div:first-child span {
+
+  display: block;
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.8px;
+
+  opacity: 0.5;
+
+}
+
+
+.panel-heading h2 {
+
+  margin: 5px 0 0;
+
+  font-size: 20px;
+
+}
+
+
+/* =========================================================
+   LIVE INDICATOR
+========================================================= */
+
+.live-indicator {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+  letter-spacing: 1.5px;
+
+  color: #6dffad;
+
+}
+
+
+.live-indicator i {
+
+  width: 7px;
+
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #4cff9a;
+
+  animation: fleetLive 1.4s infinite;
+
+}
+
+
+@keyframes fleetLive {
+
+  50% {
+    opacity: 0.25;
+  }
+
+}
+
+
+/* =========================================================
+   FILTER BAR
+========================================================= */
+
+.fleet-filter-bar {
+
+  display: flex;
+
+  gap: 6px;
+
+  padding:
+
+    0 14px 14px;
+
+  overflow-x: auto;
+
+}
+
+
+.fleet-filter {
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.07);
+
+  background:
+    rgba(255, 255, 255, 0.025);
+
+  color: inherit;
+
+  padding: 8px 11px;
+
+  border-radius: 8px;
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.8px;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+
+  transition:
+    0.2s ease;
+
+}
+
+
+.fleet-filter:hover {
+
+  background:
+    rgba(255, 255, 255, 0.07);
+
+}
+
+
+.fleet-filter.active {
+
+  background:
+    rgba(255, 255, 255, 0.12);
+
+  border-color:
+    rgba(255, 255, 255, 0.2);
+
+}
+
+
+/* =========================================================
+   VEHICLE LIST
+========================================================= */
+
+.fleet-vehicle-list {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+
+  padding: 0 10px 12px;
+
+  max-height: 600px;
+
+  overflow-y: auto;
+
+}
+
+
+.fleet-vehicle {
+
+  width: 100%;
+
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 12px;
+
+  padding: 13px;
+
+  border:
+
+    1px solid
+    transparent;
+
+  border-radius: 12px;
+
+  background:
+    rgba(255, 255, 255, 0.025);
+
+  color: inherit;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+
+}
+
+
+.fleet-vehicle:hover {
+
+  transform:
+    translateX(3px);
+
+  background:
+    rgba(255, 255, 255, 0.06);
+
+}
+
+
+.fleet-vehicle.active {
+
+  background:
+    rgba(255, 255, 255, 0.08);
+
+  border-color:
+    rgba(255, 255, 255, 0.18);
+
+  box-shadow:
+    inset 3px 0 0
+    rgba(111, 255, 178, 0.9);
+
+}
+
+
+.vehicle-icon {
+
+  width: 34px;
+
+  height: 34px;
+
+  display: grid;
+
+  place-items: center;
+
+  flex-shrink: 0;
+
+  border-radius: 9px;
+
+  background:
+    rgba(255, 255, 255, 0.06);
+
+  font-size: 16px;
+
+}
+
+
+.vehicle-main {
+
+  min-width: 0;
+
+  flex: 1;
+
+}
+
+
+.vehicle-top {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 8px;
+
+}
+
+
+.vehicle-top strong {
+
+  font-size: 13px;
+
+  letter-spacing: 0.4px;
+
+}
+
+
+.vehicle-route {
+
+  display: block;
+
+  margin-top: 5px;
+
+  font-size: 10px;
+
+  opacity: 0.72;
+
+}
+
+
+.vehicle-cargo {
+
+  display: block;
+
+  margin-top: 4px;
+
+  font-size: 9px;
+
+  opacity: 0.45;
+
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.status-success {
+
+  color: #5dffa4;
+
+}
+
+
+.status-warning {
+
+  color: #ffd166;
+
+}
+
+
+.status-critical {
+
+  color: #ff6478;
+
+}
+
+
+/* =========================================================
+   VEHICLE PROGRESS
+========================================================= */
+
+.vehicle-progress {
+
+  height: 3px;
+
+  margin-top: 9px;
+
+  border-radius: 999px;
+
+  overflow: hidden;
+
+  background:
+    rgba(255, 255, 255, 0.08);
+
+}
+
+
+.vehicle-progress div {
+
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    currentColor;
+
+  transition:
+    width 0.4s ease;
+
+}
+
+
+/* =========================================================
+   DETAIL HEADER
+========================================================= */
+
+.detail-top {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: flex-start;
+
+  gap: 15px;
+
+  margin-bottom: 18px;
+
+}
+
+
+.detail-top h2 {
+
+  margin: 6px 0 2px;
+
+  font-size: 28px;
+
+  letter-spacing: 1px;
+
+}
+
+
+.detail-top p {
+
+  margin: 0;
+
+  opacity: 0.5;
+
+  font-size: 12px;
+
+}
+
+
+.large-status {
+
+  padding: 8px 12px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.045);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.09);
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+  letter-spacing: 1px;
+
+}
+
+
+/* =========================================================
+   LIVE POSITION
+========================================================= */
+
+.vehicle-position-card {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 15px;
+
+  padding: 16px;
+
+  margin-bottom: 12px;
+
+  border-radius: 13px;
+
+  background:
+    rgba(255, 255, 255, 0.035);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.07);
+
+}
+
+
+.vehicle-position-card span {
+
+  display: block;
+
+  font-size: 8px;
+
+  letter-spacing: 1.5px;
+
+  opacity: 0.45;
+
+}
+
+
+.vehicle-position-card strong {
+
+  display: block;
+
+  margin-top: 5px;
+
+  font-size: 14px;
+
+}
+
+
+.vehicle-position-card small {
+
+  display: block;
+
+  margin-top: 3px;
+
+  font-size: 9px;
+
+  opacity: 0.5;
+
+}
+
+
+.gps-live {
+
+  display: flex !important;
+
+  align-items: center;
+
+  gap: 7px;
+
+  color: #67ffad;
+
+  font-size: 8px !important;
+
+  font-weight: 700;
+
+  white-space: nowrap;
+
+}
+
+
+.gps-dot {
+
+  width: 7px !important;
+
+  height: 7px;
+
+  padding: 0 !important;
+
+  border-radius: 50%;
+
+  background: #4cff9a;
+
+  box-shadow:
+    0 0 10px
+    rgba(76, 255, 154, 0.8);
+
+}
+
+
+/* =========================================================
+   ROUTE CARD
+========================================================= */
+
+.fleet-route-card {
+
+  padding: 17px;
+
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.055),
+      rgba(255, 255, 255, 0.025)
+    );
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.07);
+
+}
+
+
+.fleet-route-card > span {
+
+  display: block;
+
+  font-size: 8px;
+
+  letter-spacing: 1.6px;
+
+  opacity: 0.45;
+
+}
+
+
+.fleet-route-card > strong {
+
+  display: block;
+
+  margin-top: 7px;
+
+  font-size: 17px;
+
+}
+
+
+.fleet-route-card > small {
+
+  display: block;
+
+  margin-top: 4px;
+
+  font-size: 9px;
+
+  opacity: 0.45;
+
+}
+
+
+/* =========================================================
+   ROUTE PROGRESS
+========================================================= */
+
+.route-progress {
+
+  height: 7px;
+
+  margin-top: 18px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.07);
+
+  overflow: hidden;
+
+}
+
+
+.route-progress div {
+
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      #58ffac,
+      #8cffe0
+    );
+
+  box-shadow:
+    0 0 12px
+    rgba(88, 255, 172, 0.35);
+
+  transition:
+    width 0.7s ease;
+
+}
+
+
+.route-progress-info {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  margin-top: 7px;
+
+  font-size: 8px;
+
+  letter-spacing: 0.8px;
+
+  opacity: 0.45;
+
+}
+
+
+/* =========================================================
+   TELEMETRY
+========================================================= */
+
+.telemetry-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 9px;
+
+  margin-top: 12px;
+
+}
+
+
+.telemetry-card {
+
+  padding: 14px;
+
+  min-height: 82px;
+
+  border-radius: 12px;
+
+  background:
+    rgba(255, 255, 255, 0.035);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.07);
+
+}
+
+
+.telemetry-card > span {
+
+  display: block;
+
+  font-size: 8px;
+
+  letter-spacing: 1.2px;
+
+  opacity: 0.45;
+
+}
+
+
+.telemetry-card > strong {
+
+  display: block;
+
+  margin-top: 10px;
+
+  font-size: 19px;
+
+}
+
+
+.telemetry-card > strong small {
+
+  font-size: 9px;
+
+  font-weight: 500;
+
+  opacity: 0.45;
+
+}
+
+
+/* =========================================================
+   FUEL BAR
+========================================================= */
+
+.fuel-bar {
+
+  height: 4px;
+
+  margin-top: 10px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.08);
+
+}
+
+
+.fuel-bar div {
+
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    #65ffae;
+
+  transition:
+    width 0.5s ease;
+
+}
+
+
+/* =========================================================
+   SECONDARY TELEMETRY
+========================================================= */
+
+.secondary-telemetry {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 9px;
+
+  margin-top: 9px;
+
+}
+
+
+.secondary-telemetry > div {
+
+  padding: 11px 13px;
+
+  border-radius: 10px;
+
+  background:
+    rgba(255, 255, 255, 0.025);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.055);
+
+}
+
+
+.secondary-telemetry span {
+
+  display: block;
+
+  font-size: 7px;
+
+  letter-spacing: 1.3px;
+
+  opacity: 0.4;
+
+}
+
+
+.secondary-telemetry strong {
+
+  display: block;
+
+  margin-top: 4px;
+
+  font-size: 11px;
+
+}
+
+
+/* =========================================================
+   DRIVER
+========================================================= */
+
+.driver-card {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  margin-top: 12px;
+
+  padding: 14px;
+
+  border-radius: 13px;
+
+  background:
+    rgba(255, 255, 255, 0.035);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.07);
+
+}
+
+
+.driver-avatar {
+
+  width: 38px;
+
+  height: 38px;
+
+  display: grid;
+
+  place-items: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255, 255, 255, 0.09);
+
+  font-weight: 800;
+
+}
+
+
+.driver-card span {
+
+  display: block;
+
+  font-size: 7px;
+
+  letter-spacing: 1.3px;
+
+  opacity: 0.4;
+
+}
+
+
+.driver-card strong {
+
+  display: block;
+
+  margin-top: 3px;
+
+  font-size: 12px;
+
+}
+
+
+.driver-card small {
+
+  display: block;
+
+  margin-top: 2px;
+
+  font-size: 8px;
+
+  opacity: 0.4;
+
+}
+
+
+.driver-status {
+
+  margin-left: auto;
+
+  font-size: 8px;
+
+  font-weight: 700;
+
+  letter-spacing: 1px;
+
+  color: #65ffae;
+
+}
+
+
+/* =========================================================
+   AI CARD
+========================================================= */
+
+.fleet-ai-card {
+
+  display: flex;
+
+  gap: 13px;
+
+  margin-top: 12px;
+
+  padding: 16px;
+
+  border-radius: 14px;
+
+  background:
+
+    linear-gradient(
+      135deg,
+      rgba(104, 255, 184, 0.075),
+      rgba(255, 255, 255, 0.025)
+    );
+
+  border:
+    1px solid
+    rgba(104, 255, 184, 0.15);
+
+}
+
+
+.ai-symbol {
+
+  width: 34px;
+
+  height: 34px;
+
+  display: grid;
+
+  place-items: center;
+
+  flex-shrink: 0;
+
+  border-radius: 9px;
+
+  background:
+    rgba(104, 255, 184, 0.1);
+
+  color: #71ffba;
+
+  font-size: 17px;
+
+}
+
+
+.fleet-ai-card span {
+
+  display: block;
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  letter-spacing: 1.3px;
+
+  color: #74ffbc;
+
+}
+
+
+.fleet-ai-card p {
+
+  margin: 6px 0 0;
+
+  font-size: 10px;
+
+  line-height: 1.6;
+
+  opacity: 0.65;
+
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.fleet-actions {
+
+  display: flex;
+
+  gap: 8px;
+
+  margin-top: 14px;
+
+}
+
+
+.fleet-actions button {
+
+  flex: 1;
+
+  padding: 11px 12px;
+
+  border-radius: 9px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.09);
+
+  background:
+    rgba(255, 255, 255, 0.035);
+
+  color: inherit;
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.8px;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+
+}
+
+
+.fleet-actions button:hover {
+
+  transform:
+    translateY(-2px);
+
+  background:
+    rgba(255, 255, 255, 0.08);
+
+  border-color:
+    rgba(255, 255, 255, 0.18);
+
+}
+
+
+.fleet-actions .action-primary {
+
+  background:
+    rgba(96, 255, 176, 0.1);
+
+  border-color:
+    rgba(96, 255, 176, 0.2);
+
+  color: #72ffba;
+
+}
+
+
+/* =========================================================
+   AI RECOMMENDATION
+========================================================= */
+
+.ai-recommendation-panel {
+
+  margin-top: 12px;
+
+  padding: 16px;
+
+  border-radius: 14px;
+
+  background:
+    rgba(91, 255, 175, 0.045);
+
+  border:
+    1px solid
+    rgba(91, 255, 175, 0.14);
+
+  animation:
+    recommendationIn
+    0.3s ease;
+
+}
+
+
+@keyframes recommendationIn {
+
+  from {
+
+    opacity: 0;
+
+    transform:
+      translateY(-6px);
+
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform:
+      translateY(0);
+
+  }
+
+}
+
+
+.recommendation-header {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 10px;
+
+}
+
+
+.recommendation-header span {
+
+  font-size: 8px;
+
+  letter-spacing: 1.4px;
+
+  color: #70ffb8;
+
+}
+
+
+.recommendation-header strong {
+
+  font-size: 7px;
+
+  letter-spacing: 1px;
+
+  opacity: 0.45;
+
+}
+
+
+.ai-recommendation-panel p {
+
+  margin: 12px 0;
+
+  font-size: 10px;
+
+  line-height: 1.6;
+
+  opacity: 0.7;
+
+}
+
+
+.recommendation-score {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  padding-top: 9px;
+
+  border-top:
+    1px solid
+    rgba(255, 255, 255, 0.07);
+
+}
+
+
+.recommendation-score span {
+
+  font-size: 8px;
+
+  letter-spacing: 1px;
+
+  opacity: 0.4;
+
+}
+
+
+.recommendation-score strong {
+
+  font-size: 15px;
+
+  color: #70ffb8;
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1100px) {
+
+  .fleet-workspace {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+  .fleet-vehicle-list {
+
+    max-height: 330px;
+
+  }
+
+}
+
+
+@media (max-width: 900px) {
+
+  .fleet-network-strip {
+
+    grid-template-columns:
+      repeat(2, 1fr);
+
+  }
+
+  .telemetry-grid {
+
+    grid-template-columns:
+      repeat(2, 1fr);
+
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .fleet-network-strip {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+  .fleet-header-actions {
+
+    width: 100%;
+
+  }
+
+  .fleet-live-pill {
+
+    flex: 1;
+
+    justify-content: center;
+
+  }
+
+  .detail-top {
+
+    flex-direction: column;
+
+  }
+
+  .secondary-telemetry {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+  .fleet-actions {
+
+    flex-direction: column;
+
+  }
+
+}
+
+
+/* =========================================================
+   CUSTOM SCROLLBAR
+========================================================= */
+
+.fleet-vehicle-list::-webkit-scrollbar {
+
+  width: 5px;
+
+}
+
+
+.fleet-vehicle-list::-webkit-scrollbar-track {
+
+  background:
+    transparent;
+
+}
+
+
+.fleet-vehicle-list::-webkit-scrollbar-thumb {
+
+  border-radius: 10px;
+
+  background:
+    rgba(255, 255, 255, 0.14);
+
+}
