@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-const API_BASE_URL =  "https://blah-robbie-deaf-trailer.trycloudflare.com/api";
+const API_BASE_URL = "http://localhost:5000/api";
 
 /* =========================================================
    HELPER FUNCTIONS

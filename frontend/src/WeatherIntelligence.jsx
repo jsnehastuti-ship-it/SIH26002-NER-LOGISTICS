@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
    PostgreSQL + WEATHER + FLEET + ROUTE CORRELATION
    ========================================================= */
 
-const API_BASE_URL = "https://blah-robbie-deaf-trailer.trycloudflare.com/api";
+const API_BASE_URL = "http://localhost:5000/api";
 /* =========================================================
    INITIAL WEATHER DATA
    ========================================================= */

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "./AdminUsers.css";
-const API_BASE_URL =  "https://blah-robbie-deaf-trailer.trycloudflare.com/api";
+const API_BASE_URL = "http://localhost:5000/api";
 function getAuthHeaders() {
   const token = localStorage.getItem("sih26002_token");
 

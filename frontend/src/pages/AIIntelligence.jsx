@@ -1,7 +1,40 @@
 import { useEffect, useMemo, useState } from "react";
 import "./AIIntelligence.css";
 
-const API_BASE_URL =  "https://blah-robbie-deaf-trailer.trycloudflare.com/api";
+const API_BASE_URL = "http://localhost:5000/api";
+
+const apiRequest = async (endpoint, options = {}) => {
+  const url = `${API_BASE_URL}${endpoint}`;
+
+  console.log("SIH26002 API REQUEST:", url);
+
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      "Content-Type": "application/json",
+    },
+  });
+
+  const text = await response.text();
+
+  let data = {};
+
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = text;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.error ||
+        `API request failed: ${response.status} ${response.statusText}`
+    );
+  }
+
+  return data;
+};
 const fallbackData = [
   {
     id: "NER-1042",

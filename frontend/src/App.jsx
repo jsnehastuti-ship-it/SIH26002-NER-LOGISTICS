@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -11,7 +11,53 @@ import GISMap from "./components/GISMap";
 
 import "./App.css";
 
-const API_BASE_URL = "https://blah-robbie-deaf-trailer.trycloudflare.com/api";
+/* =========================================================
+   SIH26002 API CONFIGURATION
+========================================================= */
+
+const API_BASE_URL = "http://localhost:5000/api";
+
+/* =========================================================
+   CENTRAL API REQUEST HANDLER
+
+   IMPORTANT:
+   Every frontend API request goes through this function.
+   This prevents old API URLs from being used inside App.jsx.
+========================================================= */
+
+const apiRequest = async (endpoint, options = {}) => {
+  const url = `${API_BASE_URL}${endpoint}`;
+
+  console.log("SIH26002 API REQUEST:", url);
+
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      "Content-Type": "application/json",
+    },
+  });
+
+  const text = await response.text();
+
+  let data = {};
+
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = text;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.error ||
+        `API request failed: ${response.status} ${response.statusText}`
+    );
+  }
+
+  return data;
+};
+
 /* =========================================================
    ROLES
 ========================================================= */
@@ -61,8 +107,9 @@ function canAccessView(user, requestedView) {
     return false;
   }
 
-  const permissions =
-    ROLE_PERMISSIONS[user.role] || [];
+  const role = String(user.role).toUpperCase();
+
+  const permissions = ROLE_PERMISSIONS[role] || [];
 
   return permissions.includes(requestedView);
 }
@@ -82,8 +129,7 @@ function getSafeView(user, requestedView) {
 function isAlertResolved(alert) {
   return (
     alert?.is_resolved === true ||
-    String(alert?.is_resolved).toLowerCase() ===
-      "true" ||
+    String(alert?.is_resolved).toLowerCase() === "true" ||
     Number(alert?.is_resolved) === 1
   );
 }
@@ -93,9 +139,7 @@ function getActiveAlerts(alerts) {
     return [];
   }
 
-  return alerts.filter(
-    (alert) => !isAlertResolved(alert)
-  );
+  return alerts.filter((alert) => !isAlertResolved(alert));
 }
 
 /* =========================================================
@@ -103,24 +147,16 @@ function getActiveAlerts(alerts) {
 ========================================================= */
 
 async function verifySession(token) {
-  const response = await fetch(
-    `${API_BASE_URL}/auth/verify`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data.error ||
-        "Session verification failed"
-    );
+  if (!token) {
+    throw new Error("Authentication token not found");
   }
+
+  const data = await apiRequest("/auth/verify", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
   return data.user;
 }
@@ -131,55 +167,39 @@ async function verifySession(token) {
 
 function useLiveAlerts() {
   const [alerts, setAlerts] = useState([]);
-  const [connected, setConnected] =
-    useState(false);
-  const [loading, setLoading] =
-    useState(true);
-  const [error, setError] =
-    useState("");
+  const [connected, setConnected] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const fetchAlerts = async () => {
+  const fetchAlerts = useCallback(async () => {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/alerts`
-      );
+      const data = await apiRequest("/alerts");
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ||
-            "Failed to load alerts"
-        );
-      }
-
-      const receivedAlerts =
-        Array.isArray(data)
-          ? data
-          : data.alerts || [];
+      const receivedAlerts = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.alerts)
+        ? data.alerts
+        : [];
 
       setAlerts(receivedAlerts);
-
       setConnected(true);
       setError("");
       setLoading(false);
 
-    } catch (err) {
-      console.error(
-        "Live alert error:",
-        err
+      console.log(
+        "SIH26002 ALERTS RECEIVED:",
+        receivedAlerts.length
       );
+    } catch (err) {
+      console.error("Live alert error:", err);
 
       setConnected(false);
-
       setError(
-        err.message ||
-          "Unable to connect to alert service"
+        err?.message || "Unable to connect to alert service"
       );
-
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -192,17 +212,16 @@ function useLiveAlerts() {
 
     safeFetchAlerts();
 
-    const interval =
-      setInterval(
-        safeFetchAlerts,
-        5000
-      );
+    const interval = setInterval(
+      safeFetchAlerts,
+      5000
+    );
 
     return () => {
       mounted = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [fetchAlerts]);
 
   return {
     alerts,
@@ -218,113 +237,94 @@ function useLiveAlerts() {
 ========================================================= */
 
 function useLiveTelemetry(alertCount) {
-  const [telemetry, setTelemetry] =
-    useState({
-      total: 0,
-      active: 0,
-      idle: 0,
-      maintenance: 0,
-      incidents:
-        alertCount || 0,
-      connected: false,
-    });
+  const [telemetry, setTelemetry] = useState({
+    total: 0,
+    active: 0,
+    idle: 0,
+    maintenance: 0,
+    incidents: alertCount || 0,
+    connected: false,
+    error: "",
+  });
 
-  useEffect(() => {
-    let mounted = true;
+  const fetchTelemetry = useCallback(async () => {
+    try {
+      const data = await apiRequest("/vehicles");
 
-    const fetchTelemetry = async () => {
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/vehicles`
-        );
+      const vehicles = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.vehicles)
+        ? data.vehicles
+        : [];
 
-        const data =
-          await response.json();
+      const active = vehicles.filter(
+        (vehicle) =>
+          String(vehicle?.status || "").toUpperCase() === "ACTIVE"
+      ).length;
 
-        if (!response.ok) {
-          throw new Error(
-            data.error ||
-              "Failed to load fleet telemetry"
-          );
-        }
+      const idle = vehicles.filter(
+        (vehicle) =>
+          String(vehicle?.status || "").toUpperCase() === "IDLE"
+      ).length;
 
-        const vehicles =
-          Array.isArray(data)
-            ? data
-            : data.vehicles || [];
+      const maintenance = vehicles.filter(
+        (vehicle) =>
+          String(vehicle?.status || "").toUpperCase() ===
+          "MAINTENANCE"
+      ).length;
 
-        const active =
-          vehicles.filter(
-            (vehicle) =>
-              String(
-                vehicle.status
-              ).toUpperCase() ===
-              "ACTIVE"
-          ).length;
+      setTelemetry({
+        total: vehicles.length,
+        active,
+        idle,
+        maintenance,
+        incidents: alertCount || 0,
+        connected: true,
+        error: "",
+      });
 
-        const idle =
-          vehicles.filter(
-            (vehicle) =>
-              String(
-                vehicle.status
-              ).toUpperCase() ===
-              "IDLE"
-          ).length;
-
-        const maintenance =
-          vehicles.filter(
-            (vehicle) =>
-              String(
-                vehicle.status
-              ).toUpperCase() ===
-              "MAINTENANCE"
-          ).length;
-
-        if (!mounted) return;
-
-        setTelemetry({
+      console.log(
+        "SIH26002 FLEET:",
+        {
           total: vehicles.length,
           active,
           idle,
           maintenance,
-          incidents:
-            alertCount || 0,
-          connected: true,
-        });
+        }
+      );
+    } catch (error) {
+      console.error("Telemetry error:", error);
 
-      } catch (error) {
-        if (!mounted) return;
+      setTelemetry((previous) => ({
+        ...previous,
+        incidents: alertCount || previous.incidents,
+        connected: false,
+        error: error?.message || "Fleet API unavailable",
+      }));
+    }
+  }, [alertCount]);
 
-        console.error(
-          "Telemetry error:",
-          error
-        );
+  useEffect(() => {
+    let mounted = true;
 
-        setTelemetry(
-          (previous) => ({
-            ...previous,
-            incidents:
-              alertCount ||
-              previous.incidents,
-            connected: false,
-          })
-        );
-      }
+    const runTelemetry = async () => {
+      if (!mounted) return;
+
+      await fetchTelemetry();
     };
 
-    fetchTelemetry();
+    runTelemetry();
 
-    const interval =
-      setInterval(
-        fetchTelemetry,
-        5000
-      );
+    const interval = setInterval(
+      runTelemetry,
+      5000
+    );
 
     return () => {
       mounted = false;
       clearInterval(interval);
     };
-  }, [alertCount]);
+  }, [fetchTelemetry]);
 
   return telemetry;
 }
@@ -340,17 +340,13 @@ function CommandCentre({
   authUser,
   onLogout,
 }) {
-  const activeAlerts =
-    getActiveAlerts(liveAlerts);
+  const activeAlerts = getActiveAlerts(liveAlerts);
 
-  const telemetry =
-    useLiveTelemetry(
-      activeAlerts.length
-    );
+  const telemetry = useLiveTelemetry(
+    activeAlerts.length
+  );
 
-  const navigateTo = (
-    targetView
-  ) => {
+  const navigateTo = (targetView) => {
     setView(targetView);
   };
 
@@ -362,7 +358,9 @@ function CommandCentre({
   return (
     <div className="fleet-monitor">
 
-      {/* HEADER */}
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
 
       <header className="top-header">
 
@@ -373,17 +371,17 @@ function CommandCentre({
           </div>
 
           <div>
+
             <div className="brand-eyebrow">
-              NATIONAL EXPRESSWAY &
-              LOGISTICS
+              NATIONAL EXPRESSWAY & LOGISTICS
             </div>
 
             <h1>SIH26002</h1>
 
             <p>
-              Logistics Intelligence
-              Platform
+              Logistics Intelligence Platform
             </p>
+
           </div>
 
         </div>
@@ -391,13 +389,17 @@ function CommandCentre({
         <div className="header-status">
 
           <div className="live-indicator">
+
             <span className="live-dot" />
+
             LIVE SYSTEM
+
           </div>
 
           <div className="session-user">
 
             <div>
+
               <strong>
                 {authUser?.full_name ||
                   authUser?.username ||
@@ -407,6 +409,7 @@ function CommandCentre({
               <span>
                 {roleLabel}
               </span>
+
             </div>
 
             <button
@@ -422,7 +425,9 @@ function CommandCentre({
 
       </header>
 
-      {/* COMMAND INTRO */}
+      {/* =====================================================
+          COMMAND INTRO
+      ===================================================== */}
 
       <section className="command-intro">
 
@@ -455,6 +460,7 @@ function CommandCentre({
           />
 
           <div>
+
             <strong>
               DATABASE
             </strong>
@@ -464,17 +470,21 @@ function CommandCentre({
                 ? "POSTGRESQL CONNECTED"
                 : "CONNECTION DEGRADED"}
             </span>
+
           </div>
 
         </div>
 
       </section>
 
-      {/* KPI GRID */}
+      {/* =====================================================
+          KPI GRID
+      ===================================================== */}
 
       <section className="kpi-grid">
 
         <div className="kpi-card">
+
           <span className="kpi-label">
             TOTAL FLEET
           </span>
@@ -486,9 +496,11 @@ function CommandCentre({
           <small>
             Registered vehicles
           </small>
+
         </div>
 
         <div className="kpi-card">
+
           <span className="kpi-label">
             ACTIVE
           </span>
@@ -500,9 +512,11 @@ function CommandCentre({
           <small>
             Vehicles in motion
           </small>
+
         </div>
 
         <div className="kpi-card">
+
           <span className="kpi-label">
             IDLE
           </span>
@@ -514,9 +528,11 @@ function CommandCentre({
           <small>
             Vehicles stationary
           </small>
+
         </div>
 
         <div className="kpi-card">
+
           <span className="kpi-label">
             MAINTENANCE
           </span>
@@ -528,9 +544,11 @@ function CommandCentre({
           <small>
             Vehicles unavailable
           </small>
+
         </div>
 
         <div className="kpi-card">
+
           <span className="kpi-label">
             INCIDENTS
           </span>
@@ -542,17 +560,21 @@ function CommandCentre({
           <small>
             Live operational alerts
           </small>
+
         </div>
 
       </section>
 
-      {/* MODULES */}
+      {/* =====================================================
+          MODULES
+      ===================================================== */}
 
       <section className="module-section">
 
         <div className="section-heading">
 
           <div>
+
             <span className="section-eyebrow">
               OPERATIONS
             </span>
@@ -560,6 +582,7 @@ function CommandCentre({
             <h3>
               INTELLIGENCE MODULES
             </h3>
+
           </div>
 
           <span className="module-count">
@@ -572,15 +595,15 @@ function CommandCentre({
 
           <button
             className="module-card"
-            onClick={() =>
-              navigateTo("fleet")
-            }
+            onClick={() => navigateTo("fleet")}
           >
+
             <span className="module-icon">
               🚛
             </span>
 
             <div>
+
               <strong>
                 FLEET MONITOR
               </strong>
@@ -590,20 +613,22 @@ function CommandCentre({
                 GPS movement and fleet
                 status monitoring
               </span>
+
             </div>
+
           </button>
 
           <button
             className="module-card"
-            onClick={() =>
-              navigateTo("incidents")
-            }
+            onClick={() => navigateTo("incidents")}
           >
+
             <span className="module-icon">
               ⚠️
             </span>
 
             <div>
+
               <strong>
                 INCIDENT MONITOR
               </strong>
@@ -613,20 +638,22 @@ function CommandCentre({
                 severity tracking and
                 incident response
               </span>
+
             </div>
+
           </button>
 
           <button
             className="module-card"
-            onClick={() =>
-              navigateTo("routes")
-            }
+            onClick={() => navigateTo("routes")}
           >
+
             <span className="module-icon">
               🛣️
             </span>
 
             <div>
+
               <strong>
                 ROUTE INTELLIGENCE
               </strong>
@@ -636,20 +663,22 @@ function CommandCentre({
                 congestion and logistics
                 corridor analysis
               </span>
+
             </div>
+
           </button>
 
           <button
             className="module-card"
-            onClick={() =>
-              navigateTo("weather")
-            }
+            onClick={() => navigateTo("weather")}
           >
+
             <span className="module-icon">
               🌦️
             </span>
 
             <div>
+
               <strong>
                 WEATHER INTELLIGENCE
               </strong>
@@ -659,20 +688,22 @@ function CommandCentre({
                 environmental risk and
                 route conditions
               </span>
+
             </div>
+
           </button>
 
           <button
             className="module-card"
-            onClick={() =>
-              navigateTo("ai")
-            }
+            onClick={() => navigateTo("ai")}
           >
+
             <span className="module-icon">
               🧠
             </span>
 
             <div>
+
               <strong>
                 AI INTELLIGENCE
               </strong>
@@ -682,20 +713,22 @@ function CommandCentre({
                 operational signals and
                 decision support
               </span>
+
             </div>
+
           </button>
 
           <button
             className="module-card"
-            onClick={() =>
-              navigateTo("analytics")
-            }
+            onClick={() => navigateTo("analytics")}
           >
+
             <span className="module-icon">
               📊
             </span>
 
             <div>
+
               <strong>
                 ANALYTICS
               </strong>
@@ -705,20 +738,22 @@ function CommandCentre({
                 metrics and operational
                 intelligence
               </span>
+
             </div>
+
           </button>
 
           <button
             className="module-card"
-            onClick={() =>
-              navigateTo("drivers")
-            }
+            onClick={() => navigateTo("drivers")}
           >
+
             <span className="module-icon">
               👤
             </span>
 
             <div>
+
               <strong>
                 DRIVER MANAGEMENT
               </strong>
@@ -728,23 +763,24 @@ function CommandCentre({
                 assignments and workforce
                 monitoring
               </span>
+
             </div>
+
           </button>
 
-          {authUser?.role ===
-            ROLES.ADMIN && (
+          {authUser?.role === ROLES.ADMIN && (
 
             <button
               className="module-card"
-              onClick={() =>
-                navigateTo("admin")
-              }
+              onClick={() => navigateTo("admin")}
             >
+
               <span className="module-icon">
                 🔐
               </span>
 
               <div>
+
                 <strong>
                   ADMIN CONTROL PANEL
                 </strong>
@@ -754,7 +790,9 @@ function CommandCentre({
                   authorization and system
                   access control
                 </span>
+
               </div>
+
             </button>
 
           )}
@@ -763,26 +801,32 @@ function CommandCentre({
 
       </section>
 
-      {/* GIS MAP */}
+      {/* =====================================================
+          GIS MAP
+      ===================================================== */}
 
       <section className="command-map-section">
 
         <div className="section-heading">
 
           <div>
+
             <span className="section-eyebrow">
               GEOSPATIAL OPERATIONS
             </span>
 
             <h3>
-              NATIONAL LOGISTICS
-              NETWORK
+              NATIONAL LOGISTICS NETWORK
             </h3>
+
           </div>
 
           <div className="map-live-status">
+
             <span className="live-dot" />
+
             GPS TELEMETRY LIVE
+
           </div>
 
         </div>
@@ -793,13 +837,16 @@ function CommandCentre({
 
       </section>
 
-      {/* OPERATIONS SUMMARY */}
+      {/* =====================================================
+          OPERATIONS SUMMARY
+      ===================================================== */}
 
       <section className="operations-summary">
 
         <div className="section-heading">
 
           <div>
+
             <span className="section-eyebrow">
               SYSTEM OVERVIEW
             </span>
@@ -807,6 +854,7 @@ function CommandCentre({
             <h3>
               OPERATIONS SUMMARY
             </h3>
+
           </div>
 
         </div>
@@ -814,6 +862,7 @@ function CommandCentre({
         <div className="summary-grid">
 
           <div className="summary-card">
+
             <span>
               FLEET STATUS
             </span>
@@ -824,12 +873,13 @@ function CommandCentre({
 
             <small>
               {telemetry.idle} idle •{" "}
-              {telemetry.maintenance}
-              {" "}maintenance
+              {telemetry.maintenance} maintenance
             </small>
+
           </div>
 
           <div className="summary-card">
+
             <span>
               ALERT STATUS
             </span>
@@ -843,9 +893,11 @@ function CommandCentre({
                 ? "Live alert feed connected"
                 : "Alert feed unavailable"}
             </small>
+
           </div>
 
           <div className="summary-card">
+
             <span>
               ACCESS LEVEL
             </span>
@@ -855,12 +907,13 @@ function CommandCentre({
             </strong>
 
             <small>
-              Role-based access control
-              enabled
+              Role-based access control enabled
             </small>
+
           </div>
 
           <div className="summary-card">
+
             <span>
               DATA SOURCE
             </span>
@@ -872,13 +925,16 @@ function CommandCentre({
             <small>
               Live operational database
             </small>
+
           </div>
 
         </div>
 
       </section>
 
-      {/* FOOTER */}
+      {/* =====================================================
+          FOOTER
+      ===================================================== */}
 
       <footer className="command-footer">
 
@@ -888,8 +944,7 @@ function CommandCentre({
         </div>
 
         <div>
-          SECURE OPERATIONS
-          ENVIRONMENT
+          SECURE OPERATIONS ENVIRONMENT
         </div>
 
       </footer>
@@ -904,14 +959,11 @@ function CommandCentre({
 
 export default function App() {
 
-  const [authUser, setAuthUser] =
-    useState(null);
+  const [authUser, setAuthUser] = useState(null);
 
-  const [authChecking, setAuthChecking] =
-    useState(true);
+  const [authChecking, setAuthChecking] = useState(true);
 
-  const [view, setView] =
-    useState("command");
+  const [view, setView] = useState("command");
 
   const {
     alerts: liveAlerts,
@@ -927,70 +979,58 @@ export default function App() {
 
   useEffect(() => {
 
-    const checkSession =
-      async () => {
+    const checkSession = async () => {
 
-        const token =
-          localStorage.getItem(
-            "sih26002_token"
-          );
+      const token =
+        localStorage.getItem("sih26002_token");
 
-        const savedUser =
-          localStorage.getItem(
-            "sih26002_user"
-          );
+      const savedUser =
+        localStorage.getItem("sih26002_user");
 
-        if (
-          !token ||
-          !savedUser
-        ) {
-          setAuthUser(null);
-          setAuthChecking(false);
-          return;
-        }
+      if (!token || !savedUser) {
 
-        try {
+        setAuthUser(null);
+        setAuthChecking(false);
 
-          const verifiedUser =
-            await verifySession(
-              token
-            );
+        return;
+      }
 
-          setAuthUser(
-            verifiedUser
-          );
+      try {
 
-          localStorage.setItem(
-            "sih26002_user",
-            JSON.stringify(
-              verifiedUser
-            )
-          );
+        const verifiedUser =
+          await verifySession(token);
 
-        } catch (error) {
+        setAuthUser(verifiedUser);
 
-          console.error(
-            "Session verification failed:",
-            error
-          );
+        localStorage.setItem(
+          "sih26002_user",
+          JSON.stringify(verifiedUser)
+        );
 
-          localStorage.removeItem(
-            "sih26002_token"
-          );
+      } catch (error) {
 
-          localStorage.removeItem(
-            "sih26002_user"
-          );
+        console.error(
+          "Session verification failed:",
+          error
+        );
 
-          setAuthUser(null);
+        localStorage.removeItem(
+          "sih26002_token"
+        );
 
-        } finally {
+        localStorage.removeItem(
+          "sih26002_user"
+        );
 
-          setAuthChecking(false);
+        setAuthUser(null);
 
-        }
+      } finally {
 
-      };
+        setAuthChecking(false);
+
+      }
+
+    };
 
     checkSession();
 
@@ -1000,9 +1040,7 @@ export default function App() {
      LOGIN
   ======================================================= */
 
-  const handleLogin = (
-    user
-  ) => {
+  const handleLogin = (user) => {
 
     setAuthUser(user);
 
@@ -1030,6 +1068,7 @@ export default function App() {
     );
 
     setAuthUser(null);
+
     setView("command");
 
   };
@@ -1038,9 +1077,7 @@ export default function App() {
      NAVIGATION WITH RBAC
   ======================================================= */
 
-  const navigateTo = (
-    requestedView
-  ) => {
+  const navigateTo = (requestedView) => {
 
     const safeView =
       getSafeView(
@@ -1056,72 +1093,56 @@ export default function App() {
      RESOLVE INCIDENT
   ======================================================= */
 
-  const handleResolveIncident =
-    async (alertId) => {
+  const handleResolveIncident = async (alertId) => {
 
-      try {
+    try {
 
-        const token =
-          localStorage.getItem(
-            "sih26002_token"
-          );
-
-        if (!token) {
-          throw new Error(
-            "Authentication session expired"
-          );
-        }
-
-        const response =
-          await fetch(
-            `${API_BASE_URL}/alerts/${alertId}/resolve`,
-            {
-              method: "PATCH",
-
-              headers: {
-                Authorization:
-                  `Bearer ${token}`,
-
-                "Content-Type":
-                  "application/json",
-              },
-            }
-          );
-
-        const data =
-          await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.error ||
-              "Failed to resolve incident"
-          );
-        }
-
-        console.log(
-          `✅ Incident #${alertId} resolved`
+      const token =
+        localStorage.getItem(
+          "sih26002_token"
         );
 
-        /*
-          Refresh immediately instead of
-          waiting for the 5-second interval.
-        */
+      if (!token) {
 
-        await refreshAlerts();
-
-      } catch (error) {
-
-        console.error(
-          "❌ Resolve incident error:",
-          error
+        throw new Error(
+          "Authentication session expired"
         );
 
-        window.alert(
-          error.message ||
-            "Failed to resolve incident"
-        );
       }
-    };
+
+      await apiRequest(
+        `/alerts/${alertId}/resolve`,
+        {
+          method: "PATCH",
+
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log(
+        `✅ Incident #${alertId} resolved`
+      );
+
+      await refreshAlerts();
+
+    } catch (error) {
+
+      console.error(
+        "❌ Resolve incident error:",
+        error
+      );
+
+      window.alert(
+        error?.message ||
+          "Failed to resolve incident"
+      );
+
+    }
+
+  };
 
   /* =======================================================
      SESSION CHECK SCREEN
@@ -1165,9 +1186,11 @@ export default function App() {
   if (!authUser) {
 
     return (
+
       <Login
         onLogin={handleLogin}
       />
+
     );
 
   }
@@ -1176,21 +1199,14 @@ export default function App() {
      GLOBAL RBAC PROTECTION
   ======================================================= */
 
-  if (
-    !canAccessView(
-      authUser,
-      view
-    )
-  ) {
+  if (!canAccessView(authUser, view)) {
 
     return (
 
       <CommandCentre
         setView={navigateTo}
         liveAlerts={liveAlerts}
-        alertConnected={
-          alertConnected
-        }
+        alertConnected={alertConnected}
         authUser={authUser}
         onLogout={handleLogout}
       />
@@ -1203,16 +1219,16 @@ export default function App() {
      LANDING
   ======================================================= */
 
-  if (
-    view === "landing"
-  ) {
+  if (view === "landing") {
 
     return (
+
       <Landing
         onEnter={() =>
           navigateTo("command")
         }
       />
+
     );
 
   }
@@ -1221,11 +1237,10 @@ export default function App() {
      ANALYTICS
   ======================================================= */
 
-  if (
-    view === "analytics"
-  ) {
+  if (view === "analytics") {
 
     return (
+
       <Analytics
         onBack={() =>
           navigateTo("command")
@@ -1240,11 +1255,10 @@ export default function App() {
      DRIVER MANAGEMENT
   ======================================================= */
 
-  if (
-    view === "drivers"
-  ) {
+  if (view === "drivers") {
 
     return (
+
       <Drivers
         onBack={() =>
           navigateTo("command")
@@ -1259,11 +1273,10 @@ export default function App() {
      ADMIN USER MANAGEMENT
   ======================================================= */
 
-  if (
-    view === "admin"
-  ) {
+  if (view === "admin") {
 
     return (
+
       <AdminUsers
         authUser={authUser}
         onBack={() =>
@@ -1280,9 +1293,7 @@ export default function App() {
      FLEET MONITOR
   ======================================================= */
 
-  if (
-    view === "fleet"
-  ) {
+  if (view === "fleet") {
 
     return (
 
@@ -1327,14 +1338,7 @@ export default function App() {
      INCIDENT MONITOR
   ======================================================= */
 
-  if (
-    view === "incidents"
-  ) {
-
-    /*
-      Only unresolved incidents are
-      considered active.
-    */
+  if (view === "incidents") {
 
     const activeAlerts =
       getActiveAlerts(liveAlerts);
@@ -1343,27 +1347,24 @@ export default function App() {
       activeAlerts.filter(
         (alert) =>
           String(
-            alert.severity
-          ).toUpperCase() ===
-          "CRITICAL"
+            alert?.severity || ""
+          ).toUpperCase() === "CRITICAL"
       ).length;
 
     const highCount =
       activeAlerts.filter(
         (alert) =>
           String(
-            alert.severity
-          ).toUpperCase() ===
-          "HIGH"
+            alert?.severity || ""
+          ).toUpperCase() === "HIGH"
       ).length;
 
     const mediumCount =
       activeAlerts.filter(
         (alert) =>
           String(
-            alert.severity
-          ).toUpperCase() ===
-          "MEDIUM"
+            alert?.severity || ""
+          ).toUpperCase() === "MEDIUM"
       ).length;
 
     return (
@@ -1472,6 +1473,7 @@ export default function App() {
               </div>
 
               <span>
+
                 {alertLoading
                   ? "LOADING..."
                   : alertError
@@ -1479,6 +1481,7 @@ export default function App() {
                   : alertConnected
                   ? "LIVE"
                   : "OFFLINE"}
+
               </span>
 
             </div>
@@ -1505,8 +1508,7 @@ export default function App() {
 
             {!alertLoading &&
               !alertError &&
-              activeAlerts.length ===
-                0 && (
+              activeAlerts.length === 0 && (
 
                 <div className="empty-state">
 
@@ -1526,33 +1528,29 @@ export default function App() {
 
             {/* ALERT LIST */}
 
-            {activeAlerts.length >
-              0 && (
+            {activeAlerts.length > 0 && (
 
               <div className="alert-list">
 
                 {activeAlerts.map(
-                  (
-                    alert,
-                    index
-                  ) => {
+                  (alert, index) => {
 
                     const severity =
                       String(
-                        alert.severity ||
+                        alert?.severity ||
                           "MEDIUM"
                       ).toUpperCase();
 
                     const alertType =
                       String(
-                        alert.alert_type ||
+                        alert?.alert_type ||
                           "OPERATIONAL_ALERT"
                       ).toUpperCase();
 
                     const vehicleNumber =
-                      alert.vehicle_number ||
+                      alert?.vehicle_number ||
                       `Vehicle #${
-                        alert.vehicle_id ||
+                        alert?.vehicle_id ||
                         "UNKNOWN"
                       }`;
 
@@ -1561,18 +1559,14 @@ export default function App() {
                       <div
                         className="alert-item"
                         key={
-                          alert.id ||
+                          alert?.id ||
                           index
                         }
                       >
 
-                        {/* SEVERITY */}
-
                         <div className="alert-severity">
                           {severity}
                         </div>
-
-                        {/* CONTENT */}
 
                         <div className="alert-content">
 
@@ -1581,7 +1575,7 @@ export default function App() {
                           </strong>
 
                           <span>
-                            {alert.message ||
+                            {alert?.message ||
                               "Active logistics event"}
                           </span>
 
@@ -1590,33 +1584,23 @@ export default function App() {
                             {vehicleNumber}
                           </small>
 
-                          {/* LOCATION */}
-
-                          {alert.latitude !==
-                            null &&
-                            alert.longitude !==
-                              null && (
+                          {alert?.latitude != null &&
+                            alert?.longitude != null && (
 
                               <small>
                                 📍{" "}
                                 {Number(
                                   alert.latitude
-                                ).toFixed(
-                                  5
-                                )}
+                                ).toFixed(5)}
                                 ,{" "}
                                 {Number(
                                   alert.longitude
-                                ).toFixed(
-                                  5
-                                )}
+                                ).toFixed(5)}
                               </small>
 
                             )}
 
-                          {/* TIME */}
-
-                          {alert.created_at && (
+                          {alert?.created_at && (
 
                             <small>
                               🕒{" "}
@@ -1629,19 +1613,13 @@ export default function App() {
 
                         </div>
 
-                        {/* RESOLVE BUTTON */}
-
                         <div
                           className="alert-actions"
                           style={{
-                            display:
-                              "flex",
-                            alignItems:
-                              "center",
-                            marginLeft:
-                              "auto",
-                            paddingLeft:
-                              "20px",
+                            display: "flex",
+                            alignItems: "center",
+                            marginLeft: "auto",
+                            paddingLeft: "20px",
                           }}
                         >
 
@@ -1652,9 +1630,7 @@ export default function App() {
                                 alert.id
                               )
                             }
-                            disabled={
-                              !alert.id
-                            }
+                            disabled={!alert?.id}
                           >
                             ✓ RESOLVE
                           </button>
@@ -1686,9 +1662,7 @@ export default function App() {
      ROUTE INTELLIGENCE
   ======================================================= */
 
-  if (
-    view === "routes"
-  ) {
+  if (view === "routes") {
 
     return (
 
@@ -1734,9 +1708,7 @@ export default function App() {
      WEATHER INTELLIGENCE
   ======================================================= */
 
-  if (
-    view === "weather"
-  ) {
+  if (view === "weather") {
 
     return (
 
@@ -1805,13 +1777,20 @@ export default function App() {
      AI INTELLIGENCE
   ======================================================= */
 
- if (view === "ai") {
-  return (
-    <AIIntelligence
-      onBack={() => navigateTo("command")}
-    />
-  );
-}
+  if (view === "ai") {
+
+    return (
+
+      <AIIntelligence
+        onBack={() =>
+          navigateTo("command")
+        }
+      />
+
+    );
+
+  }
+
   /* =======================================================
      DEFAULT — COMMAND CENTRE
   ======================================================= */
@@ -1821,9 +1800,7 @@ export default function App() {
     <CommandCentre
       setView={navigateTo}
       liveAlerts={liveAlerts}
-      alertConnected={
-        alertConnected
-      }
+      alertConnected={alertConnected}
       authUser={authUser}
       onLogout={handleLogout}
     />
